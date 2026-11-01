@@ -248,7 +248,10 @@ export const OpenInPicker = memo(function OpenInPicker({
   const effectiveEditors = remote.mode === "local-exec" ? availableEditors : remoteCapableEditors;
   const [preferredEditor, setPreferredEditor] = usePreferredEditor(effectiveEditors);
 
-  const openInEditor = async (editorId: EditorId | null): Promise<boolean> => {
+  const openInEditor = async (
+    editorId: EditorId | null,
+    persistPreference = true,
+  ): Promise<boolean> => {
     if (!openInCwd) return false;
     const editor = editorId ?? preferredEditor;
     if (!editor) return false;
@@ -266,7 +269,7 @@ export const OpenInPicker = memo(function OpenInPicker({
       const opened = await openRemoteEditorUrl(url);
       if (!opened) return false;
       markRemoteHintSeen();
-      setPreferredEditor(editor);
+      if (persistPreference) setPreferredEditor(editor);
       return true;
     }
     if (!readEnvironmentScope(environmentId, AuthOrchestrationOperateScope)) return false;
@@ -278,7 +281,7 @@ export const OpenInPicker = memo(function OpenInPicker({
         ...(revealFileManager && editor === "file-manager" ? { reveal: true } : {}),
       },
     });
-    setPreferredEditor(editor);
+    if (persistPreference) setPreferredEditor(editor);
     return (await result)._tag === "Success";
   };
 
@@ -342,7 +345,7 @@ export const OpenInPicker = memo(function OpenInPicker({
             density={presentation === "menu" ? "touch" : "default"}
 
             disabled={!openInCwd || !canOpenEditor}
-            onClick={() => openInEditor(preferredEditor)}
+            onClick={() => openInEditor(preferredEditor, !openInCwdIsFile)}
           >
             <primaryOption.Icon className={cn("size-4", getOpenInIconClass(primaryOption.kind))} />
             <MenuItemLabel>Open in {primaryOption.label}</MenuItemLabel>
@@ -381,7 +384,7 @@ export const OpenInPicker = memo(function OpenInPicker({
         onClick={() => {
           if (!preferredEditor) return;
           const label = editorLabelForPlatform(preferredEditor, navigator.platform);
-          void openInEditor(preferredEditor).then((opened) => {
+          void openInEditor(preferredEditor, !openInCwdIsFile).then((opened) => {
             if (opened) announce(`Opened in ${label}`);
           });
         }}

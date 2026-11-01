@@ -551,18 +551,18 @@ it.effect.each([
     const batchScript = executable.endsWith(".bat");
     assert.equal(
       spawned.command,
-      batchScript ? `^"${executable.replaceAll(" ", "^ ")}^"` : executable,
+      batchScript
+        ? `^"${executable.replaceAll(" ", "^ ")}^" ^"/workspace^ with^ spaces/file.ts:12:4^"`
+        : executable,
     );
     assert.equal(spawned.options.shell, batchScript);
     assert.deepEqual(
       spawned.args,
-      editor === "github-desktop"
-        ? [
-            platform === "win32"
-              ? '^"/workspace^ with^ spaces/file.ts:12:4^"'
-              : "/workspace with spaces/file.ts:12:4",
-          ]
-        : ["--line", "12", "--column", "3", "/workspace with spaces/file.ts"],
+      batchScript
+        ? []
+        : editor === "github-desktop"
+          ? ["/workspace with spaces/file.ts:12:4"]
+          : ["--line", "12", "--column", "3", "/workspace with spaces/file.ts"],
     );
   }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
 );
